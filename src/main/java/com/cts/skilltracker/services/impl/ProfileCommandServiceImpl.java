@@ -14,6 +14,7 @@ import com.cts.skilltracker.commands.CreateProfileCommand;
 import com.cts.skilltracker.entities.ProfileEntity;
 import com.cts.skilltracker.entities.SkillEntity;
 import com.cts.skilltracker.entities.SkillLookupEntity;
+import com.cts.skilltracker.helpers.AmazonRabbitMQConnect;
 import com.cts.skilltracker.helpers.RabbitMQSender;
 import com.cts.skilltracker.helpers.SkillLookupCacheHelper;
 import com.cts.skilltracker.models.ProfileCreateDTO;
@@ -38,6 +39,9 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 
 	@Autowired
 	RabbitMQSender rmqSender;
+	
+	@Autowired
+	AmazonRabbitMQConnect amazonRabbitMQConnect;
 
 	public ProfileCommandServiceImpl() {
 
@@ -71,7 +75,9 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 				profileRsp.setSkills(profileCreateDTO.getSkills());
 				// This should publish the message on Rabbit MQ
 				logger.info(METHOD + "Publishing message on Rabbit MQ...");
-				rmqSender.send(profileRsp);
+				//rmqSender.send(profileRsp);
+				amazonRabbitMQConnect.sendToAwsMQ(profileRsp);
+				logger.info("New user profile successfully sent to MQ");
 			}
 
 		} catch (Exception ex) {
@@ -113,8 +119,9 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 				profileRsp.setSkills(profileUpdateDTO.getSkills());
 				// This should publish the message on Rabbit MQ
 				logger.info(METHOD + "Publishing updated profile data on Rabbit MQ...");
-				rmqSender.send(profileRsp);
-
+				//rmqSender.send(profileRsp);
+				amazonRabbitMQConnect.sendToAwsMQ(profileRsp);
+				logger.info("Updated user profile successfully sent to MQ");
 			}
 
 		} catch (Exception ex) {
