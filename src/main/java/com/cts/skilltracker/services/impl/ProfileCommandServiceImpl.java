@@ -14,8 +14,7 @@ import com.cts.skilltracker.commands.CreateProfileCommand;
 import com.cts.skilltracker.entities.ProfileEntity;
 import com.cts.skilltracker.entities.SkillEntity;
 import com.cts.skilltracker.entities.SkillLookupEntity;
-import com.cts.skilltracker.helpers.AmazonRabbitMQConnect;
-import com.cts.skilltracker.helpers.RabbitMQSender;
+import com.cts.skilltracker.helpers.SQSProducer;
 import com.cts.skilltracker.helpers.SkillLookupCacheHelper;
 import com.cts.skilltracker.models.ProfileCreateDTO;
 import com.cts.skilltracker.models.ProfileRsp;
@@ -36,12 +35,9 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 
 	@Autowired
 	SkillLookupCacheHelper cacheHelper;
-
-	@Autowired
-	RabbitMQSender rmqSender;
 	
 	@Autowired
-	AmazonRabbitMQConnect amazonRabbitMQConnect;
+	SQSProducer producer;
 
 	public ProfileCommandServiceImpl() {
 
@@ -74,10 +70,10 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 				profileRsp.setMobile(profileCreateDTO.getMobile());
 				profileRsp.setSkills(profileCreateDTO.getSkills());
 				// This should publish the message on Rabbit MQ
-				logger.info(METHOD + "Publishing message on Rabbit MQ...");
+				logger.info(METHOD + "Publishing message on SQS...");
 				//rmqSender.send(profileRsp);
-				amazonRabbitMQConnect.sendToAwsMQ(profileRsp);
-				logger.info("New user profile successfully sent to MQ");
+				producer.publish(profileRsp);
+				logger.info("New user profile successfully sent to SQS");
 			}
 
 		} catch (Exception ex) {
@@ -118,10 +114,10 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 				profileRsp.setMobile(profileEntity.getMobile());
 				profileRsp.setSkills(profileUpdateDTO.getSkills());
 				// This should publish the message on Rabbit MQ
-				logger.info(METHOD + "Publishing updated profile data on Rabbit MQ...");
+				logger.info(METHOD + "Publishing updated profile data on SQS...");
 				//rmqSender.send(profileRsp);
-				amazonRabbitMQConnect.sendToAwsMQ(profileRsp);
-				logger.info("Updated user profile successfully sent to MQ");
+				producer.publish(profileRsp);
+				logger.info("Updated user profile successfully sent to SQS");
 			}
 
 		} catch (Exception ex) {
